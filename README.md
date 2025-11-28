@@ -1,36 +1,261 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sync2Bucket
 
-## Getting Started
+A modern desktop application for syncing folders with Scaleway S3 cloud storage. Built with Tauri 2.x, Next.js 14, and Rust.
 
-First, run the development server:
+![Sync2Bucket](src-tauri/icons/128x128.png)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Features
+
+- 📁 **Two-way Sync**: Upload local folders to cloud or download cloud folders locally
+- 🔐 **Encrypted License Keys**: Secure user identification with AES-256-GCM encryption
+- 📊 **Real-time Progress**: Live progress tracking with speed and ETA
+- ⏸️ **Pause/Resume**: Interrupt and resume sync operations
+- 🗑️ **Cloud Management**: Delete all cloud files with confirmation
+- ⏰ **Expiration Alerts**: Warns users about upcoming credential expiration
+- 🛡️ **Admin Controls**: Whitelist/blacklist system for key management
+
+## Tech Stack
+
+- **Desktop Shell**: [Tauri 2.x](https://tauri.app/) (Rust)
+- **Frontend**: Next.js 14 + TypeScript + Tailwind CSS
+- **State Management**: Zustand
+- **Animations**: Framer Motion
+- **S3 Client**: rusoto_s3 (Rust)
+- **Encryption**: AES-256-GCM
+
+## Project Structure
+
+```
+sync2bucket/
+├── src/                      # Next.js frontend
+│   ├── app/                  # App router pages
+│   ├── components/           # React components
+│   │   ├── KeyEntry.tsx      # License key input
+│   │   ├── SyncPanel.tsx     # Main sync interface
+│   │   └── Progress.tsx      # Progress display
+│   └── lib/                  # Utilities & store
+├── src-tauri/                # Tauri/Rust backend
+│   ├── src/
+│   │   ├── lib.rs            # Tauri app setup
+│   │   ├── commands.rs       # IPC command handlers
+│   │   ├── s3_client.rs      # S3 operations
+│   │   ├── sync_engine.rs    # Sync logic
+│   │   ├── crypto.rs         # Key encryption/decryption
+│   │   ├── admin.rs          # Whitelist/blacklist system
+│   │   ├── secrets.rs        # ⚠️ NOT IN GIT - credentials
+│   │   └── bin/keygen.rs     # Key generator CLI
+│   └── icons/                # App icons
+└── package.json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Node.js** 18+
+- **Rust** 1.70+
+- **macOS** 10.15+ (for building macOS apps)
 
-## Learn More
+### 1. Clone and Install Dependencies
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+git clone <repository-url>
+cd sync2bucket
+npm install
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. Configure Secrets
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Copy the secrets template and fill in your values:
 
-## Deploy on Vercel
+```bash
+cp src-tauri/src/secrets.example.rs src-tauri/src/secrets.rs
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Edit `src-tauri/src/secrets.rs`:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```rust
+// Scaleway S3 credentials
+pub const S3_ACCESS_KEY: &str = "YOUR_SCALEWAY_ACCESS_KEY";
+pub const S3_SECRET_KEY: &str = "YOUR_SCALEWAY_SECRET_KEY";
+
+// Master key for license encryption (exactly 32 bytes)
+pub const MASTER_ENCRYPTION_KEY: &[u8; 32] = b"YOUR_32_CHARACTER_SECRET_KEY!!!";
+```
+
+> ⚠️ **IMPORTANT**: Never commit `secrets.rs` to version control!
+
+### 3. Development Mode
+
+```bash
+npm run tauri:dev
+```
+
+This starts the Next.js dev server and opens the Tauri app in development mode.
+
+### 4. Build for Production
+
+```bash
+npm run tauri:build
+```
+
+Output files:
+- `src-tauri/target/release/bundle/macos/Sync2Bucket.app`
+- `src-tauri/target/release/bundle/dmg/Sync2Bucket_x.x.x_aarch64.dmg`
+
+## Code Signing & Notarization (macOS)
+
+### Code Signing
+
+The app is configured to sign with a Developer ID certificate. Ensure you have:
+
+1. An Apple Developer account ($99/year)
+2. A "Developer ID Application" certificate installed
+
+The signing identity is configured in `src-tauri/tauri.conf.json`:
+
+```json
+"macOS": {
+  "signingIdentity": "Developer ID Application: Your Name (TEAM_ID)"
+}
+```
+
+### Notarization
+
+For Gatekeeper approval (no security warnings), set environment variables before building:
+
+```bash
+export APPLE_ID="your-apple-id@email.com"
+export APPLE_PASSWORD="xxxx-xxxx-xxxx-xxxx"  # App-specific password
+export APPLE_TEAM_ID="YOUR_TEAM_ID"
+
+npm run tauri:build
+```
+
+To create an app-specific password:
+1. Go to https://appleid.apple.com
+2. Sign in → Security → App-Specific Passwords → Generate
+
+## Generating User License Keys
+
+### Using the CLI Tool
+
+After building, use the `keygen` binary:
+
+```bash
+cd src-tauri
+./target/release/keygen --name "User Name"
+```
+
+Output:
+```
+╔══════════════════════════════════════════════════════════════╗
+║                    SYNC2BUCKET LICENSE KEY                    ║
+╠══════════════════════════════════════════════════════════════╣
+║ User: User Name                                              ║
+║ UID:  u_abc123def456                                         ║
+║ Created: 2025-11-28 12:00:00 UTC                             ║
+╠══════════════════════════════════════════════════════════════╣
+║ Key:                                                         ║
+║ EXAD-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ║
+╚══════════════════════════════════════════════════════════════╝
+
+Full key (copy this):
+EXAD-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### Key Format
+
+Keys are encrypted JSON payloads containing:
+- `uid`: Unique user identifier (determines cloud folder)
+- `name`: User's display name
+- `created`: Timestamp of key creation
+
+Each user's files are stored in: `users/{uid}/`
+
+## Admin Features
+
+### Whitelist/Blacklist
+
+Admin files are stored in the S3 bucket under `_admin/`:
+
+- `_admin/whitelist.json` - Authorized keys
+- `_admin/blacklist.json` - Disabled keys
+- `_admin/activity_log.json` - User activity tracking
+
+These files are only accessible with the master S3 credentials (not user keys).
+
+### Activity Logging
+
+The app logs user actions:
+- Login attempts
+- Sync operations
+- File deletions
+
+## Configuration
+
+### S3 Settings
+
+Configured in `src-tauri/src/s3_client.rs`:
+
+```rust
+const S3_ENDPOINT: &str = "https://s3.nl-ams.scw.cloud";
+const S3_REGION: &str = "nl-ams";
+const S3_BUCKET: &str = "cloud-storage-exad";
+```
+
+### Credentials Expiration
+
+Set the expiration date in `src-tauri/src/s3_client.rs`:
+
+```rust
+const CREDENTIALS_EXPIRY_YEAR: i32 = 2026;
+const CREDENTIALS_EXPIRY_MONTH: u32 = 11;
+const CREDENTIALS_EXPIRY_DAY: u32 = 28;
+```
+
+Users will see warnings when expiration approaches.
+
+## Distribution
+
+### For Users
+
+1. Download the DMG file
+2. Drag Sync2Bucket to Applications
+3. Open the app and enter your license key
+4. Start syncing!
+
+### Distributing Keys
+
+Send users:
+1. The `Sync2Bucket.dmg` file
+2. Their unique license key (generated with `keygen`)
+
+## Troubleshooting
+
+### "App can't be opened because it is from an unidentified developer"
+
+If the app isn't notarized:
+1. Right-click the app
+2. Select "Open"
+3. Click "Open" in the dialog
+
+### Build Errors
+
+1. Ensure `secrets.rs` exists with valid values
+2. Run `cargo clean` in `src-tauri/` and rebuild
+3. Check Rust version: `rustc --version` (requires 1.70+)
+
+### S3 Connection Issues
+
+1. Verify S3 credentials in `secrets.rs`
+2. Check network connectivity
+3. Ensure the bucket exists and is accessible
+
+## License
+
+Proprietary - ExAd
+
+## Support
+
+Contact: support@exad.com

@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Tauri
+/src-tauri/target/
+
+# Secrets (NEVER commit)
+/src-tauri/src/secrets.rs

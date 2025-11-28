@@ -1,0 +1,62 @@
+[package]
+name = "sync2bucket"
+version = "0.1.0"
+description = "Sync folders with Scaleway S3 storage"
+authors = ["ExAd"]
+license = "MIT"
+edition = "2021"
+default-run = "sync2bucket"
+
+[[bin]]
+name = "sync2bucket"
+path = "src/main.rs"
+
+[lib]
+name = "sync2bucket_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "keygen"
+path = "src/bin/keygen.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.5.1", features = [] }
+
+[dependencies]
+# Tauri
+tauri = { version = "2.9.2", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Use rusoto (older S3 SDK) instead of aws-sdk which requires newer Rust
+rusoto_core = "0.48"
+rusoto_s3 = "0.48"
+rusoto_credential = "0.48"
+
+# Crypto for key encryption/decryption
+aes-gcm = "0.10"
+base64 = "0.21"
+sha2 = "0.10"
+rand = "0.8"
+
+# Keychain
+keyring = "2"
+
+# Utilities
+log = "0.4"
+hex = "0.4"
+thiserror = "1"
+chrono = { version = "0.4", features = ["serde"] }
+walkdir = "2"
+futures = "0.3"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-opener = "2"
