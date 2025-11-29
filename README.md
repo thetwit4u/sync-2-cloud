@@ -216,6 +216,47 @@ const CREDENTIALS_EXPIRY_DAY: u32 = 28;
 
 Users will see warnings when expiration approaches.
 
+## CI/CD - Automated Builds
+
+The project includes GitHub Actions to automatically build for **macOS** and **Windows**.
+
+### Setup GitHub Secrets
+
+Go to your repo → Settings → Secrets and variables → Actions → New repository secret
+
+Add these secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `S3_ACCESS_KEY` | Scaleway S3 access key |
+| `S3_SECRET_KEY` | Scaleway S3 secret key |
+| `MASTER_ENCRYPTION_KEY` | 32-character encryption key |
+| `APPLE_ID` | Apple ID email (for notarization) |
+| `APPLE_PASSWORD` | App-specific password |
+| `APPLE_TEAM_ID` | Apple Team ID (e.g., V72M7CT7PD) |
+| `APPLE_SIGNING_IDENTITY` | Full signing identity string |
+| `APPLE_CERTIFICATE` | Base64-encoded .p12 certificate |
+| `APPLE_CERTIFICATE_PASSWORD` | Certificate password |
+
+### Trigger a Build
+
+**Option 1: Tag a release**
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+**Option 2: Manual trigger**
+Go to Actions → Build Sync2Bucket → Run workflow
+
+### Build Outputs
+
+| Platform | Artifact |
+|----------|----------|
+| macOS ARM64 | `Sync2Bucket.dmg` |
+| macOS Intel | `Sync2Bucket.dmg` |
+| Windows x64 | `Sync2Bucket.msi`, `Sync2Bucket-setup.exe` |
+
 ## Distribution
 
 ### For Users

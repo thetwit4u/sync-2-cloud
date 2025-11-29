@@ -30,7 +30,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["dmg", "app"],
+    "targets": "all",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -43,6 +43,19 @@
       "signingIdentity": "Developer ID Application: ExAd (V72M7CT7PD)",
       "hardenedRuntime": true,
       "entitlements": null
+    },
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowUserToChooseInstallDir": true,
+      "installerIcon": "icons/icon.ico",
+      "headerImage": null,
+      "sidebarImage": null,
+      "license": null
     }
   }
 }
